@@ -216,6 +216,30 @@ export const submitQuiz = mutation({
       timeSpent: args.timeSpent,
     });
 
+    // Update mastery inline to avoid deep type instantiation issues
+    const studentDoc = await ctx.db.get(quiz.studentId);
+    if (studentDoc) {
+      const key = quiz.subject as keyof typeof studentDoc.mastery;
+      const currentMastery = studentDoc.mastery[key];
+
+      let masteryChange = 0;
+      if (score >= 90) masteryChange = 8;
+      else if (score >= 80) masteryChange = 5;
+      else if (score >= 70) masteryChange = 2;
+      else if (score >= 60) masteryChange = 0;
+      else if (score >= 50) masteryChange = -2;
+      else masteryChange = -5;
+
+      const newMastery = Math.max(0, Math.min(100, currentMastery + masteryChange));
+
+      await ctx.db.patch(studentDoc._id, {
+        mastery: {
+          ...studentDoc.mastery,
+          [key]: newMastery,
+        },
+      });
+    }
+
     return { score, correct, total: quiz.questions.length };
   },
 });

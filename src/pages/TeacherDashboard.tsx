@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 import { useAuth } from "@/hooks/use-auth";
 import { api } from "@/convex/_generated/api";
 import { useQuery, useMutation } from "convex/react";
@@ -33,6 +33,19 @@ export default function TeacherDashboard() {
     name: "",
     description: "",
   });
+  const [showStudentsDialog, setShowStudentsDialog] = useState(false);
+  const [selectedClassroomId, setSelectedClassroomId] = useState<string | null>(null);
+  const [feedbackDrafts, setFeedbackDrafts] = useState<Record<string, string>>({});
+  const studentsInSelected = useQuery(
+    api.teachers.getClassroomStudents,
+    selectedClassroomId ? { classroomId: selectedClassroomId as any } : "skip"
+  );
+  const addFeedback = useMutation(api.teachers.addFeedback);
+
+  // Ensure a non-null list before mapping to avoid TS 'possibly null' errors
+  const studentsSafe = (studentsInSelected ?? []).filter(
+    (s): s is NonNullable<typeof s> => Boolean(s)
+  );
 
   useEffect(() => {
     if (!isLoading && (!user || user.role !== "teacher")) {
@@ -74,7 +87,33 @@ export default function TeacherDashboard() {
     toast.success("Classroom code copied to clipboard!");
   };
 
-  const totalStudents = classrooms?.reduce((sum, classroom) => sum + classroom.studentCount, 0) || 0;
+  const openStudents = (classroomId: string) => {
+    setSelectedClassroomId(classroomId);
+    setShowStudentsDialog(true);
+  };
+
+  const handleSendFeedback = async (studentId: string) => {
+    if (!selectedClassroomId) return;
+    const message = feedbackDrafts[studentId]?.trim();
+    if (!message) {
+      toast.error("Please enter a feedback message");
+      return;
+    }
+    try {
+      await addFeedback({
+        studentId: studentId as any,
+        classroomId: selectedClassroomId as any,
+        message,
+      });
+      toast.success("Feedback sent");
+      setFeedbackDrafts((prev) => ({ ...prev, [studentId]: "" }));
+    } catch {
+      toast.error("Failed to send feedback");
+    }
+  };
+
+  const totalStudents =
+    classrooms?.reduce((sum, classroom) => sum + classroom.studentCount, 0) || 0;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-blue-50">
@@ -245,7 +284,9 @@ export default function TeacherDashboard() {
                       <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                         <div>
                           <p className="text-sm font-medium">Classroom Code</p>
-                          <p className="text-lg font-mono font-bold text-green-600">{classroom.code}</p>
+                          <p className="text-lg font-mono font-bold text-green-600">
+                            {classroom.code}
+                          </p>
                         </div>
                         <Button
                           variant="outline"
@@ -261,7 +302,12 @@ export default function TeacherDashboard() {
                           <BarChart3 className="h-4 w-4 mr-2" />
                           View Reports
                         </Button>
-                        <Button variant="outline" className="flex-1" size="sm">
+                        <Button
+                          variant="outline"
+                          className="flex-1"
+                          size="sm"
+                          onClick={() => openStudents(classroom._id)}
+                        >
                           <Users className="h-4 w-4 mr-2" />
                           Students
                         </Button>
@@ -288,6 +334,66 @@ export default function TeacherDashboard() {
           )}
         </div>
       </div>
+
+      <Dialog open={showStudentsDialog} onOpenChange={setShowStudentsDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Classroom Students</DialogTitle>
+            <DialogDescription>
+              View recent performance and send quick feedback
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedClassroomId ? (
+            <div className="space-y-4">
+              {!studentsInSelected ? (
+                <div className="text-sm text-gray-500">Loading...</div>
+              ) : studentsSafe.length === 0 ? (
+                <div className="text-sm text-gray-500">No students in this classroom yet.</div>
+              ) : (
+                <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
+                  {studentsSafe.map((s) => (
+                    <Card key={s._id}>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-base">{s.name}</CardTitle>
+                        <CardDescription>
+                          Joined: {new Date(s.joinedAt).toLocaleDateString()} • Recent Avg: {s.recentAvgScore}% • Quizzes: {s.quizCount}
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-2">
+                        <input
+                          type="text"
+                          value={feedbackDrafts[s._id] ?? ""}
+                          onChange={(e) =>
+                            setFeedbackDrafts((prev) => ({ ...prev, [s._id]: e.target.value }))
+                          }
+                          placeholder="Write feedback..."
+                          className="w-full rounded-md border px-3 py-2 text-sm"
+                        />
+                        <div className="flex justify-end">
+                          <Button
+                            size="sm"
+                            onClick={() => handleSendFeedback(s._id)}
+                          >
+                            Send Feedback
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+              <div className="flex justify-end">
+                <DialogClose asChild>
+                  <Button variant="outline">Close</Button>
+                </DialogClose>
+              </div>
+            </div>
+          ) : (
+            <div className="text-sm text-gray-500">No classroom selected.</div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
