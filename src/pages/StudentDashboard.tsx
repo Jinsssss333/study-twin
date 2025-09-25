@@ -164,7 +164,7 @@ export default function StudentDashboard() {
               animate={{ opacity: 1, y: 0 }}
               className="mb-8"
             >
-              <h2 className="text-3xl font-bold text-gray-900 mb-2">
+              <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
                 Welcome back, {student.name}! 👋
               </h2>
               <p className="text-gray-600 dark:text-gray-300">
