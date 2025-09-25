@@ -19,6 +19,7 @@ export default function StudentSetup() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const createProfile = useMutation(api.students.createProfile);
+  const setRole = useMutation(api.users.setRole);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -52,6 +53,11 @@ export default function StudentSetup() {
 
     setIsSubmitting(true);
     try {
+      // Ensure the current user has the "student" role before creating the profile
+      if (!user || user.role !== "student") {
+        await setRole({ role: "student" as any });
+      }
+
       await createProfile(formData);
       toast.success("Profile created successfully!");
       navigate("/student/dashboard", { replace: true });
