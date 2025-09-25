@@ -347,7 +347,7 @@ export default function StudentDashboard() {
           {/* Study Twin Tab */}
           <TabsContent value="twin" className="space-y-6">
             {student.twinData ? (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 gap-6">
                 {/* Current vs Twin Comparison */}
                 <Card>
                   <CardHeader>
@@ -361,6 +361,9 @@ export default function StudentDashboard() {
                     <div className="space-y-2">
                       <div className="flex justify-between items-center">
                         <span className="text-sm font-medium">Weekly Study Hours</span>
+                        <span className="text-sm text-gray-600">
+                          {student.weeklyStudyHours}h → {student.twinData.targetWeeklyHours}h
+                        </span>
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div className="text-center p-3 bg-blue-50 rounded-lg">
@@ -374,41 +377,50 @@ export default function StudentDashboard() {
                       </div>
                     </div>
 
-                    {/* Subject Mastery Comparison */}
+                    {/* Subject Mastery Comparison (compact + delta) */}
                     <div className="space-y-4">
                       <h4 className="font-medium">Subject Mastery Comparison</h4>
                       {subjects.map((subject, i) => {
                         const current = student.mastery[subject.key as keyof typeof student.mastery];
                         const target = student.twinData!.targetMastery[subject.key as keyof typeof student.twinData.targetMastery];
+                        const delta = Math.max(0, Math.round(target - current));
                         return (
                           <motion.div
                             key={subject.key}
                             initial={{ opacity: 0, y: 8 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.05 * i }}
-                            className="space-y-2"
+                            className="space-y-2 rounded-lg p-3 bg-white/50"
                           >
-                            <div className="flex justify-between items-center">
-                              <span className="text-sm">{subject.name}</span>
-                              <span className="text-sm text-gray-500">{current}% → {target}%</span>
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-medium">{subject.name}</span>
+                                <span className="text-xs text-blue-600">Current: {Math.max(0, Math.min(100, Math.round(current)))}%</span>
+                                <span className="text-xs text-green-600">Twin: {Math.max(0, Math.min(100, Math.round(target)))}%</span>
+                              </div>
+                              {delta > 0 ? (
+                                <span className="text-xs text-orange-600">+{delta} points to reach twin level</span>
+                              ) : (
+                                <span className="text-xs text-green-600 flex items-center gap-1">
+                                  <CheckCircle className="h-3 w-3" /> On track
+                                </span>
+                              )}
                             </div>
-                            <div className="grid grid-cols-2 gap-2">
-                              <div className="h-2 w-full rounded-full bg-gray-200 overflow-hidden">
-                                <motion.div
-                                  initial={{ width: 0 }}
-                                  animate={{ width: `${Math.min(100, Math.max(0, current))}%` }}
-                                  transition={{ type: "spring", stiffness: 120, damping: 18 }}
-                                  className="h-2 rounded-full bg-gradient-to-r from-blue-500 to-blue-600"
-                                />
-                              </div>
-                              <div className="h-2 w-full rounded-full bg-gray-200 overflow-hidden">
-                                <motion.div
-                                  initial={{ width: 0 }}
-                                  animate={{ width: `${Math.min(100, Math.max(0, target))}%` }}
-                                  transition={{ type: "spring", stiffness: 120, damping: 18 }}
-                                  className="h-2 rounded-full bg-gradient-to-r from-green-500 to-emerald-500"
-                                />
-                              </div>
+                            <div className="h-2 w-full rounded-full bg-gray-200 overflow-hidden">
+                              <motion.div
+                                initial={{ width: 0 }}
+                                animate={{ width: `${Math.min(100, Math.max(0, current))}%` }}
+                                transition={{ type: "spring", stiffness: 120, damping: 18 }}
+                                className="h-2 rounded-full bg-gradient-to-r from-blue-500 to-blue-600"
+                              />
+                            </div>
+                            <div className="h-2 w-full rounded-full bg-gray-200 overflow-hidden">
+                              <motion.div
+                                initial={{ width: 0 }}
+                                animate={{ width: `${Math.min(100, Math.max(0, target))}%` }}
+                                transition={{ type: "spring", stiffness: 120, damping: 18 }}
+                                className="h-2 rounded-full bg-gradient-to-r from-green-500 to-emerald-500"
+                              />
                             </div>
                           </motion.div>
                         );
@@ -417,29 +429,123 @@ export default function StudentDashboard() {
                   </CardContent>
                 </Card>
 
-                {/* Micro Habits */}
+                {/* Micro Habits - pill style like reference */}
                 <Card>
                   <CardHeader>
-                    <CardTitle className="flex items-center space-x-2">
+                    <CardTitle className="flex items-center gap-2">
                       <Target className="h-5 w-5" />
-                      <span>Recommended Micro-Habits</span>
+                      <span>Your Twin's Success Habits</span>
                     </CardTitle>
-                    <CardDescription>
-                      Small daily actions to reach your twin's level
-                    </CardDescription>
+                    <CardDescription>Small daily actions to reach your twin's level</CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-3">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       {student.twinData.microHabits.map((habit, index) => (
-                        <div key={index} className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg">
-                          <Zap className="h-4 w-4 text-yellow-500 mt-0.5" />
-                          <span className="text-sm">{habit}</span>
-                        </div>
+                        <motion.div
+                          key={index}
+                          initial={{ opacity: 0, y: 6 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: 0.03 * index }}
+                          className="flex items-center gap-3 rounded-xl bg-blue-50/70 border border-blue-100 px-4 py-3 text-sm text-gray-800 shadow-sm"
+                        >
+                          <span className="text-yellow-600">✨</span>
+                          <span>{habit}</span>
+                        </motion.div>
                       ))}
                     </div>
-                    <Button className="w-full mt-4" onClick={handleGenerateTwin}>
+                    <Button className="w-full mt-5" onClick={handleGenerateTwin}>
                       Regenerate Twin
                     </Button>
+                  </CardContent>
+                </Card>
+
+                {/* Weekly Study Schedule derived from twin targets */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Clock className="h-5 w-5" />
+                      <span>Your Weekly Study Schedule</span>
+                    </CardTitle>
+                    <CardDescription>Estimated hours per subject based on your twin's targets</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {(() => {
+                      const targets = student.twinData!.targetMastery;
+                      const total = subjects.reduce((s, sub) => s + Math.max(1, targets[sub.key as keyof typeof targets]), 0);
+                      return subjects.map((sub) => {
+                        const t = targets[sub.key as keyof typeof targets];
+                        const weight = Math.max(1, t) / total;
+                        const hours = Math.round(student.twinData!.targetWeeklyHours * weight * 10) / 10;
+                        const daily = Math.round((hours / 7) * 10) / 10;
+                        const pct = Math.min(100, Math.max(6, Math.round((hours / Math.max(1, student.twinData!.targetWeeklyHours)) * 100)));
+                        const color =
+                          sub.key === "math"
+                            ? "from-blue-500 to-blue-600"
+                            : sub.key === "science"
+                            ? "from-green-500 to-emerald-600"
+                            : "from-purple-500 to-violet-600";
+                        return (
+                          <div key={sub.key} className="space-y-1">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-medium">{sub.name}</span>
+                                <span className="text-xs text-gray-600">{hours}h/week</span>
+                              </div>
+                              <span className="text-xs text-gray-500">~{daily} hours per day</span>
+                            </div>
+                            <div className="h-2 w-full rounded-full bg-gray-200 overflow-hidden">
+                              <motion.div
+                                initial={{ width: 0 }}
+                                animate={{ width: `${pct}%` }}
+                                transition={{ type: "spring", stiffness: 120, damping: 18 }}
+                                className={`h-2 rounded-full bg-gradient-to-r ${color}`}
+                              />
+                            </div>
+                          </div>
+                        );
+                      });
+                    })()}
+                    <div className="mt-3 rounded-lg border border-blue-100 bg-blue-50/70 p-3 text-sm text-blue-800">
+                      💡 Pro tip: Start with your weakest subject when your mind is fresh!
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Priority Focus Areas (top gaps) */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Target className="h-5 w-5" />
+                      <span>Your Priority Focus Areas</span>
+                    </CardTitle>
+                    <CardDescription>These subjects show the biggest opportunity for improvement</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {(() => {
+                      const gaps = subjects
+                        .map((s) => {
+                          const cur = student.mastery[s.key as keyof typeof student.mastery];
+                          const tar = student.twinData!.targetMastery[s.key as keyof typeof student.twinData.targetMastery];
+                          return { key: s.key, name: s.name, gap: Math.max(0, Math.round(tar - cur)) };
+                        })
+                        .sort((a, b) => b.gap - a.gap)
+                        .slice(0, 3);
+                      return (
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                          {gaps.map((g, i) => (
+                            <div
+                              key={g.key}
+                              className="flex items-center justify-between rounded-xl border border-green-200 bg-green-50/70 px-4 py-3"
+                            >
+                              <span className="text-sm font-medium text-green-900">{g.name}</span>
+                              <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-green-600 text-white text-xs">
+                                {i + 1}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })()}
                   </CardContent>
                 </Card>
               </div>
