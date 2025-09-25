@@ -37,7 +37,7 @@ export default function StudentSidebar({
       initial={false}
       animate={{ width: collapsed ? 64 : 260 }}
       className={cn(
-        "h-[calc(100vh-4rem)] sticky top-16 border-r bg-white/70 backdrop-blur supports-[backdrop-filter]:bg-white/60",
+        "h-[calc(100vh-4rem)] sticky top-16 border-r bg-card/70 backdrop-blur supports-[backdrop-filter]:bg-card/60",
         "flex flex-col"
       )}
     >

@@ -51,7 +51,7 @@ export default function StudentDashboard() {
 
   // Add: sidebar and settings state
   const [activeTab, setActiveTab] = useState<string>("overview");
-  const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(true);
   const [settingsOpen, setSettingsOpen] = useState<boolean>(false);
 
   // Add: theme state with localStorage persistence
@@ -118,9 +118,9 @@ export default function StudentDashboard() {
     Math.round(quizzes.reduce((sum, quiz) => sum + quiz.score, 0) / quizzes.length) : 0;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="bg-white/70 backdrop-blur supports-[backdrop-filter]:bg-white/60 border-b border-white/60 sticky top-0 z-40">
+      <header className="bg-card/70 backdrop-blur supports-[backdrop-filter]:bg-card/60 border-b sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-4">
@@ -137,7 +137,7 @@ export default function StudentDashboard() {
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="w-full pl-0 pr-4 sm:pr-6 lg:pr-8 py-8">
         {/* Wrap content with sidebar layout */}
         <div className="flex gap-6">
           <StudentSidebar
