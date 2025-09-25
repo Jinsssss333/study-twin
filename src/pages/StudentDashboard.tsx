@@ -16,7 +16,9 @@ import {
   Clock,
   Award,
   BarChart3,
-  Zap
+  Zap,
+  MessageSquare,
+  CheckCircle
 } from "lucide-react";
 import { useNavigate } from "react-router";
 import { useEffect } from "react";
@@ -31,6 +33,8 @@ export default function StudentDashboard() {
   const student = useQuery(api.students.getCurrentProfile, {});
   const quizzes = useQuery(api.quizzes.getMyQuizzes, {});
   const classrooms = useQuery(api.students.getMyClassrooms, {});
+  const feedbacks = useQuery(api.students.getMyFeedback, {});
+  const markFeedbackRead = useMutation(api.students.markFeedbackRead);
 
   // Ensure classrooms are non-null for mapping
   const classroomsSafe = (classrooms ?? []).filter(
@@ -111,12 +115,13 @@ export default function StudentDashboard() {
         </motion.div>
 
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="twin">Study Twin</TabsTrigger>
             <TabsTrigger value="quizzes">Quizzes</TabsTrigger>
             <TabsTrigger value="classrooms">Classrooms</TabsTrigger>
             <TabsTrigger value="progress">Progress</TabsTrigger>
+            <TabsTrigger value="feedback">Feedback</TabsTrigger>
           </TabsList>
 
           {/* Overview Tab */}
@@ -437,6 +442,65 @@ export default function StudentDashboard() {
                   <BarChart3 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                   <p className="text-gray-600">Detailed analytics coming soon!</p>
                 </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="feedback">
+            <Card>
+              <CardHeader>
+                <CardTitle>Feedback</CardTitle>
+                <CardDescription>Messages sent by your teachers</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {!feedbacks ? (
+                  <div className="text-sm text-gray-500">Loading...</div>
+                ) : (feedbacks ?? []).length === 0 ? (
+                  <div className="text-center py-12 text-gray-600">
+                    <MessageSquare className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    No feedback yet. Your teacher's messages will appear here.
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {(feedbacks ?? []).map((f) => (
+                      <div key={f._id} className="border rounded-lg p-4 flex items-start justify-between">
+                        <div className="space-y-1">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium">Message</span>
+                            {f.isRead ? (
+                              <span className="inline-flex items-center text-xs text-green-700 bg-green-50 px-2 py-0.5 rounded">
+                                <CheckCircle className="h-3 w-3 mr-1" /> Read
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center text-xs text-blue-700 bg-blue-50 px-2 py-0.5 rounded">
+                                <MessageSquare className="h-3 w-3 mr-1" /> New
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-sm text-gray-800">{f.message}</p>
+                        </div>
+                        <div className="ml-4">
+                          {!f.isRead && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={async () => {
+                                try {
+                                  await markFeedbackRead({ feedbackId: f._id as any });
+                                  toast.success("Marked as read");
+                                } catch {
+                                  toast.error("Failed to mark as read");
+                                }
+                              }}
+                            >
+                              Mark as read
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>

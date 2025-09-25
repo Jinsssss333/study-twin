@@ -288,3 +288,61 @@ export const updateMasteryFromQuiz = mutation({
     return { oldMastery: currentMastery, newMastery, change: masteryChange };
   },
 });
+
+export const getMyFeedback = query({
+  args: {},
+  handler: async (ctx) => {
+    const user = await getCurrentUser(ctx);
+    if (!user || user.role !== "student") {
+      return [];
+    }
+
+    const student = await ctx.db
+      .query("students")
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .unique();
+
+    if (!student) {
+      return [];
+    }
+
+    const feedback = await ctx.db
+      .query("feedback")
+      .withIndex("by_student", (q) => q.eq("studentId", student._id))
+      .order("desc")
+      .collect();
+
+    return feedback;
+  },
+});
+
+export const markFeedbackRead = mutation({
+  args: {
+    feedbackId: v.id("feedback"),
+  },
+  handler: async (ctx, args) => {
+    const user = await getCurrentUser(ctx);
+    if (!user || user.role !== "student") {
+      throw new Error("Unauthorized");
+    }
+
+    const fb = await ctx.db.get(args.feedbackId);
+    if (!fb) {
+      throw new Error("Feedback not found");
+    }
+
+    const student = await ctx.db
+      .query("students")
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .unique();
+
+    if (!student || fb.studentId !== student._id) {
+      throw new Error("Unauthorized");
+    }
+
+    if (fb.isRead) return args.feedbackId;
+
+    await ctx.db.patch(args.feedbackId, { isRead: true });
+    return args.feedbackId;
+  },
+});
