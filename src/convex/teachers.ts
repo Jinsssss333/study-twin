@@ -172,27 +172,79 @@ export const getClassroomStudents = query({
       .withIndex("by_classroom", (q) => q.eq("classroomId", args.classroomId))
       .collect();
 
+    // Add per-subject progress details for each student
+    const subjectKeys = ["math", "science", "english", "history", "foreign_language"] as const;
+
     const students = await Promise.all(
       memberships.map(async (membership) => {
         const student = await ctx.db.get(membership.studentId);
         if (!student) return null;
 
-        // Get recent quiz performance
+        // Recent (overall) quiz performance snapshot
         const recentQuizzes = await ctx.db
           .query("quizzes")
           .withIndex("by_student", (q) => q.eq("studentId", student._id))
           .order("desc")
           .take(5);
 
-        const avgScore = recentQuizzes.length > 0 
-          ? recentQuizzes.reduce((sum, quiz) => sum + quiz.score, 0) / recentQuizzes.length
-          : 0;
+        const recentAvgScore =
+          recentQuizzes.length > 0
+            ? recentQuizzes.reduce((sum, quiz) => sum + quiz.score, 0) / recentQuizzes.length
+            : 0;
+
+        // Overall aggregates (all quizzes)
+        const allQuizzes = await ctx.db
+          .query("quizzes")
+          .withIndex("by_student", (q) => q.eq("studentId", student._id))
+          .collect();
+
+        const overallQuizCount = allQuizzes.length;
+        const overallAverage =
+          overallQuizCount > 0
+            ? Math.round(allQuizzes.reduce((sum, q) => sum + q.score, 0) / overallQuizCount)
+            : 0;
+
+        // Subject-level aggregates
+        const subjectAverages: Record<
+          (typeof subjectKeys)[number],
+          { avg: number; count: number }
+        > = {
+          math: { avg: 0, count: 0 },
+          science: { avg: 0, count: 0 },
+          english: { avg: 0, count: 0 },
+          history: { avg: 0, count: 0 },
+          foreign_language: { avg: 0, count: 0 },
+        };
+
+        for (const s of subjectKeys) {
+          const subjectQuizzes = await ctx.db
+            .query("quizzes")
+            .withIndex("by_student_and_subject", (q) =>
+              q.eq("studentId", student._id).eq("subject", s),
+            )
+            .collect();
+
+          const count = subjectQuizzes.length;
+          const avg =
+            count > 0
+              ? Math.round(subjectQuizzes.reduce((sum, q) => sum + q.score, 0) / count)
+              : 0;
+          subjectAverages[s] = { avg, count };
+        }
 
         return {
           ...student,
           joinedAt: membership.joinedAt,
-          recentAvgScore: Math.round(avgScore),
+          // Backwards-compatible fields
+          recentAvgScore: Math.round(recentAvgScore),
           quizCount: recentQuizzes.length,
+          // New progress details
+          progress: {
+            overallAverage,
+            overallQuizCount,
+            subjectAverages,
+            mastery: student.mastery,
+          },
         };
       })
     );
