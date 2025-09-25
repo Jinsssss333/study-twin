@@ -135,7 +135,7 @@ export default function TeacherDashboard() {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-4">
               <img src="/logo.svg" alt="Study Twin" className="h-8 w-8" />
-              <h1 className="text-xl font-bold">Study Twin - Teacher</h1>
+              <h1 className="text-xl font-bold dark:text-gray-100">Study Twin - Teacher</h1>
             </div>
             <div className="flex items-center space-x-4">
               <span className="text-sm text-gray-600 dark:text-gray-300">Welcome, {teacher.name}!</span>
@@ -233,7 +233,7 @@ export default function TeacherDashboard() {
             {/* Classrooms Section */}
             <div className="space-y-6">
               <div className="flex justify-between items-center">
-                <h3 className="text-2xl font-bold">My Classrooms</h3>
+                <h3 className="text-2xl font-bold dark:text-gray-100">My Classrooms</h3>
                 <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
                   <DialogTrigger asChild>
                     <Button className="bg-gradient-to-r from-green-600 to-green-700">
