@@ -8,4 +8,13 @@ declare global {
   }
 }
 
+// Add minimal module declaration so TypeScript recognizes html2canvas used in StudentDashboard PDF export
+declare module "html2canvas" {
+  const html2canvas: (
+    element: HTMLElement,
+    options?: Record<string, any>
+  ) => Promise<HTMLCanvasElement>;
+  export default html2canvas;
+}
+
 export {};
