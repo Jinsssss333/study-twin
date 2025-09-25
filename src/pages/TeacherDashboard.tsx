@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
+import { Progress } from "@/components/ui/progress";
 import { useAuth } from "@/hooks/use-auth";
 import { api } from "@/convex/_generated/api";
 import { useQuery, useMutation } from "convex/react";
@@ -361,6 +362,75 @@ export default function TeacherDashboard() {
                         </CardDescription>
                       </CardHeader>
                       <CardContent className="space-y-2">
+                        <div className="space-y-3 rounded-md border p-3 bg-gray-50">
+                          <div className="text-sm font-semibold">Progress Overview</div>
+                          <div className="text-xs text-gray-600">
+                            Overall Average: {s.progress?.overallAverage ?? 0}% • Total Quizzes: {s.progress?.overallQuizCount ?? s.quizCount}
+                          </div>
+
+                          <div className="space-y-3">
+                            {/* Math */}
+                            <div>
+                              <div className="flex justify-between text-xs mb-1">
+                                <span>Math (Mastery)</span>
+                                <span>{s.progress?.mastery.math ?? 0}%</span>
+                              </div>
+                              <Progress value={s.progress?.mastery.math ?? 0} />
+                              <div className="text-[11px] text-gray-500 mt-1">
+                                Quiz Avg: {s.progress?.subjectAverages.math.avg ?? 0}% ({s.progress?.subjectAverages.math.count ?? 0})
+                              </div>
+                            </div>
+
+                            {/* Science */}
+                            <div>
+                              <div className="flex justify-between text-xs mb-1">
+                                <span>Science (Mastery)</span>
+                                <span>{s.progress?.mastery.science ?? 0}%</span>
+                              </div>
+                              <Progress value={s.progress?.mastery.science ?? 0} />
+                              <div className="text-[11px] text-gray-500 mt-1">
+                                Quiz Avg: {s.progress?.subjectAverages.science.avg ?? 0}% ({s.progress?.subjectAverages.science.count ?? 0})
+                              </div>
+                            </div>
+
+                            {/* English */}
+                            <div>
+                              <div className="flex justify-between text-xs mb-1">
+                                <span>English (Mastery)</span>
+                                <span>{s.progress?.mastery.english ?? 0}%</span>
+                              </div>
+                              <Progress value={s.progress?.mastery.english ?? 0} />
+                              <div className="text-[11px] text-gray-500 mt-1">
+                                Quiz Avg: {s.progress?.subjectAverages.english.avg ?? 0}% ({s.progress?.subjectAverages.english.count ?? 0})
+                              </div>
+                            </div>
+
+                            {/* History */}
+                            <div>
+                              <div className="flex justify-between text-xs mb-1">
+                                <span>History (Mastery)</span>
+                                <span>{s.progress?.mastery.history ?? 0}%</span>
+                              </div>
+                              <Progress value={s.progress?.mastery.history ?? 0} />
+                              <div className="text-[11px] text-gray-500 mt-1">
+                                Quiz Avg: {s.progress?.subjectAverages.history.avg ?? 0}% ({s.progress?.subjectAverages.history.count ?? 0})
+                              </div>
+                            </div>
+
+                            {/* Foreign Language */}
+                            <div>
+                              <div className="flex justify-between text-xs mb-1">
+                                <span>Foreign Language (Mastery)</span>
+                                <span>{s.progress?.mastery.foreign_language ?? 0}%</span>
+                              </div>
+                              <Progress value={s.progress?.mastery.foreign_language ?? 0} />
+                              <div className="text-[11px] text-gray-500 mt-1">
+                                Quiz Avg: {s.progress?.subjectAverages.foreign_language.avg ?? 0}% ({s.progress?.subjectAverages.foreign_language.count ?? 0})
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
                         <input
                           type="text"
                           value={feedbackDrafts[s._id] ?? ""}
