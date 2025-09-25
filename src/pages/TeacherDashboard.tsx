@@ -347,7 +347,7 @@ export default function TeacherDashboard() {
                           )}
                         </CardHeader>
                         <CardContent className="space-y-4">
-                          <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                          <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-card/60 rounded-lg">
                             <div>
                               <p className="text-sm font-medium">Classroom Code</p>
                               <p className="text-lg font-mono font-bold text-green-600">
@@ -387,8 +387,8 @@ export default function TeacherDashboard() {
                 <Card>
                   <CardContent className="text-center py-12">
                     <BookOpen className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">No classrooms yet</h3>
-                    <p className="text-gray-600 mb-4">
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">No classrooms yet</h3>
+                    <p className="text-gray-600 dark:text-gray-300 mb-4">
                       Create your first classroom to start managing students
                     </p>
                     <Button onClick={() => setShowCreateDialog(true)}>
@@ -413,9 +413,9 @@ export default function TeacherDashboard() {
               {selectedClassroomId ? (
                 <div className="space-y-4">
                   {!studentsInSelected ? (
-                    <div className="text-sm text-gray-500">Loading...</div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400">Loading...</div>
                   ) : studentsSafe.length === 0 ? (
-                    <div className="text-sm text-gray-500">No students in this classroom yet.</div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400">No students in this classroom yet.</div>
                   ) : (
                     <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
                       {studentsSafe.map((s) => (
@@ -427,9 +427,9 @@ export default function TeacherDashboard() {
                             </CardDescription>
                           </CardHeader>
                           <CardContent className="space-y-2">
-                            <div className="space-y-3 rounded-md border p-3 bg-gray-50">
-                              <div className="text-sm font-semibold">Progress Overview</div>
-                              <div className="text-xs text-gray-600">
+                            <div className="space-y-3 rounded-md border dark:border-gray-700 p-3 bg-gray-50 dark:bg-card/60">
+                              <div className="text-sm font-semibold dark:text-gray-100">Progress Overview</div>
+                              <div className="text-xs text-gray-600 dark:text-gray-300">
                                 Overall Average: {s.progress?.overallAverage ?? 0}% • Total Quizzes: {s.progress?.overallQuizCount ?? s.quizCount}
                               </div>
 
@@ -441,7 +441,7 @@ export default function TeacherDashboard() {
                                     <span>{s.progress?.mastery.math ?? 0}%</span>
                                   </div>
                                   <Progress value={s.progress?.mastery.math ?? 0} />
-                                  <div className="text-[11px] text-gray-500 mt-1">
+                                  <div className="text-[11px] text-gray-500 dark:text-gray-400 mt-1">
                                     Quiz Avg: {s.progress?.subjectAverages.math.avg ?? 0}% ({s.progress?.subjectAverages.math.count ?? 0})
                                   </div>
                                 </div>
@@ -453,7 +453,7 @@ export default function TeacherDashboard() {
                                     <span>{s.progress?.mastery.science ?? 0}%</span>
                                   </div>
                                   <Progress value={s.progress?.mastery.science ?? 0} />
-                                  <div className="text-[11px] text-gray-500 mt-1">
+                                  <div className="text-[11px] text-gray-500 dark:text-gray-400 mt-1">
                                     Quiz Avg: {s.progress?.subjectAverages.science.avg ?? 0}% ({s.progress?.subjectAverages.science.count ?? 0})
                                   </div>
                                 </div>
@@ -465,7 +465,7 @@ export default function TeacherDashboard() {
                                     <span>{s.progress?.mastery.english ?? 0}%</span>
                                   </div>
                                   <Progress value={s.progress?.mastery.english ?? 0} />
-                                  <div className="text-[11px] text-gray-500 mt-1">
+                                  <div className="text-[11px] text-gray-500 dark:text-gray-400 mt-1">
                                     Quiz Avg: {s.progress?.subjectAverages.english.avg ?? 0}% ({s.progress?.subjectAverages.english.count ?? 0})
                                   </div>
                                 </div>
@@ -477,7 +477,7 @@ export default function TeacherDashboard() {
                                     <span>{s.progress?.mastery.history ?? 0}%</span>
                                   </div>
                                   <Progress value={s.progress?.mastery.history ?? 0} />
-                                  <div className="text-[11px] text-gray-500 mt-1">
+                                  <div className="text-[11px] text-gray-500 dark:text-gray-400 mt-1">
                                     Quiz Avg: {s.progress?.subjectAverages.history.avg ?? 0}% ({s.progress?.subjectAverages.history.count ?? 0})
                                   </div>
                                 </div>
@@ -489,7 +489,7 @@ export default function TeacherDashboard() {
                                     <span>{s.progress?.mastery.foreign_language ?? 0}%</span>
                                   </div>
                                   <Progress value={s.progress?.mastery.foreign_language ?? 0} />
-                                  <div className="text-[11px] text-gray-500 mt-1">
+                                  <div className="text-[11px] text-gray-500 dark:text-gray-400 mt-1">
                                     Quiz Avg: {s.progress?.subjectAverages.foreign_language.avg ?? 0}% ({s.progress?.subjectAverages.foreign_language.count ?? 0})
                                   </div>
                                 </div>
@@ -503,7 +503,7 @@ export default function TeacherDashboard() {
                                 setFeedbackDrafts((prev) => ({ ...prev, [s._id]: e.target.value }))
                               }
                               placeholder="Write feedback..."
-                              className="w-full rounded-md border px-3 py-2 text-sm"
+                              className="w-full rounded-md border px-3 py-2 text-sm dark:bg-card/60 dark:text-gray-100"
                             />
                             <div className="flex justify-end">
                               <Button
