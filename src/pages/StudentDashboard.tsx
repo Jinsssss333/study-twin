@@ -208,6 +208,65 @@ export default function StudentDashboard() {
             {/* Subject Mastery */}
             <SubjectMastery mastery={student.mastery} subjects={subjects} />
 
+            {/* Twin Comparison - Overview */}
+            {student.twinData && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Target className="h-5 w-5" />
+                    Twin Comparison
+                  </CardTitle>
+                  <CardDescription>
+                    See how you compare to your Study Twin's targets
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {/* Weekly hours comparison */}
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-medium">Weekly Study Hours</span>
+                      <span className="text-sm text-gray-600">
+                        {student.weeklyStudyHours}h → {student.twinData.targetWeeklyHours}h
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="space-y-1">
+                        <div className="text-xs text-gray-500">Current</div>
+                        <Progress value={(student.weeklyStudyHours / Math.max(student.twinData.targetWeeklyHours, 1)) * 100} className="h-2" />
+                      </div>
+                      <div className="space-y-1">
+                        <div className="text-xs text-gray-500">Twin Target</div>
+                        <Progress value={100} className="h-2" />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Subject mastery comparisons */}
+                  <div className="space-y-4">
+                    <h4 className="font-medium">Subject Mastery</h4>
+                    {subjects.map((subject) => {
+                      const current = student.mastery[subject.key as keyof typeof student.mastery];
+                      const target = student.twinData!.targetMastery[subject.key as keyof typeof student.twinData.targetMastery];
+                      const pct = Math.min(100, Math.max(0, current));
+                      const targetPct = Math.min(100, Math.max(0, target));
+                      return (
+                        <div key={subject.key} className="space-y-2">
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm">{subject.name}</span>
+                            <span className="text-xs text-gray-500">{pct}% → {targetPct}%</span>
+                          </div>
+                          <div className="grid grid-cols-2 gap-2">
+                            <Progress value={pct} className="h-2" />
+                            <Progress value={targetPct} className="h-2" />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             {/* Quick Actions */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => navigate("/student/quiz")}>
