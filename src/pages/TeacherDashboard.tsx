@@ -176,7 +176,7 @@ export default function TeacherDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-blue-50">
+    <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="bg-card/70 backdrop-blur supports-[backdrop-filter]:bg-card/60 border-b border-white/60 sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
