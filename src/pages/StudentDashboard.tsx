@@ -229,14 +229,31 @@ export default function StudentDashboard() {
                         {student.weeklyStudyHours}h → {student.twinData.targetWeeklyHours}h
                       </span>
                     </div>
+                    {/* Animated bars */}
                     <div className="grid grid-cols-2 gap-2">
                       <div className="space-y-1">
                         <div className="text-xs text-gray-500">Current</div>
-                        <Progress value={(student.weeklyStudyHours / Math.max(student.twinData.targetWeeklyHours, 1)) * 100} className="h-2" />
+                        <div className="h-2 w-full rounded-full bg-gray-200 overflow-hidden">
+                          <motion.div
+                            initial={{ width: 0 }}
+                            animate={{
+                              width: `${Math.min(100, Math.round((student.weeklyStudyHours / Math.max(student.twinData.targetWeeklyHours, 1)) * 100))}%`,
+                            }}
+                            transition={{ type: "spring", stiffness: 120, damping: 18 }}
+                            className="h-2 rounded-full bg-gradient-to-r from-blue-500 to-green-500"
+                          />
+                        </div>
                       </div>
                       <div className="space-y-1">
                         <div className="text-xs text-gray-500">Twin Target</div>
-                        <Progress value={100} className="h-2" />
+                        <div className="h-2 w-full rounded-full bg-gray-200 overflow-hidden">
+                          <motion.div
+                            initial={{ width: 0 }}
+                            animate={{ width: "100%" }}
+                            transition={{ type: "spring", stiffness: 120, damping: 18, delay: 0.05 }}
+                            className="h-2 rounded-full bg-gradient-to-r from-green-500 to-emerald-500"
+                          />
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -244,22 +261,42 @@ export default function StudentDashboard() {
                   {/* Subject mastery comparisons */}
                   <div className="space-y-4">
                     <h4 className="font-medium">Subject Mastery</h4>
-                    {subjects.map((subject) => {
+                    {subjects.map((subject, i) => {
                       const current = student.mastery[subject.key as keyof typeof student.mastery];
                       const target = student.twinData!.targetMastery[subject.key as keyof typeof student.twinData.targetMastery];
                       const pct = Math.min(100, Math.max(0, current));
                       const targetPct = Math.min(100, Math.max(0, target));
                       return (
-                        <div key={subject.key} className="space-y-2">
+                        <motion.div
+                          key={subject.key}
+                          initial={{ opacity: 0, y: 8 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: 0.05 * i }}
+                          className="space-y-2"
+                        >
                           <div className="flex justify-between items-center">
                             <span className="text-sm">{subject.name}</span>
                             <span className="text-xs text-gray-500">{pct}% → {targetPct}%</span>
                           </div>
                           <div className="grid grid-cols-2 gap-2">
-                            <Progress value={pct} className="h-2" />
-                            <Progress value={targetPct} className="h-2" />
+                            <div className="h-2 w-full rounded-full bg-gray-200 overflow-hidden">
+                              <motion.div
+                                initial={{ width: 0 }}
+                                animate={{ width: `${pct}%` }}
+                                transition={{ type: "spring", stiffness: 120, damping: 18 }}
+                                className="h-2 rounded-full bg-gradient-to-r from-blue-500 to-blue-600"
+                              />
+                            </div>
+                            <div className="h-2 w-full rounded-full bg-gray-200 overflow-hidden">
+                              <motion.div
+                                initial={{ width: 0 }}
+                                animate={{ width: `${targetPct}%` }}
+                                transition={{ type: "spring", stiffness: 120, damping: 18 }}
+                                className="h-2 rounded-full bg-gradient-to-r from-green-500 to-emerald-500"
+                              />
+                            </div>
                           </div>
-                        </div>
+                        </motion.div>
                       );
                     })}
                   </div>
@@ -340,20 +377,40 @@ export default function StudentDashboard() {
                     {/* Subject Mastery Comparison */}
                     <div className="space-y-4">
                       <h4 className="font-medium">Subject Mastery Comparison</h4>
-                      {subjects.map((subject) => {
+                      {subjects.map((subject, i) => {
                         const current = student.mastery[subject.key as keyof typeof student.mastery];
                         const target = student.twinData!.targetMastery[subject.key as keyof typeof student.twinData.targetMastery];
                         return (
-                          <div key={subject.key} className="space-y-2">
+                          <motion.div
+                            key={subject.key}
+                            initial={{ opacity: 0, y: 8 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.05 * i }}
+                            className="space-y-2"
+                          >
                             <div className="flex justify-between items-center">
                               <span className="text-sm">{subject.name}</span>
                               <span className="text-sm text-gray-500">{current}% → {target}%</span>
                             </div>
                             <div className="grid grid-cols-2 gap-2">
-                              <Progress value={current} className="h-2" />
-                              <Progress value={target} className="h-2" />
+                              <div className="h-2 w-full rounded-full bg-gray-200 overflow-hidden">
+                                <motion.div
+                                  initial={{ width: 0 }}
+                                  animate={{ width: `${Math.min(100, Math.max(0, current))}%` }}
+                                  transition={{ type: "spring", stiffness: 120, damping: 18 }}
+                                  className="h-2 rounded-full bg-gradient-to-r from-blue-500 to-blue-600"
+                                />
+                              </div>
+                              <div className="h-2 w-full rounded-full bg-gray-200 overflow-hidden">
+                                <motion.div
+                                  initial={{ width: 0 }}
+                                  animate={{ width: `${Math.min(100, Math.max(0, target))}%` }}
+                                  transition={{ type: "spring", stiffness: 120, damping: 18 }}
+                                  className="h-2 rounded-full bg-gradient-to-r from-green-500 to-emerald-500"
+                                />
+                              </div>
                             </div>
-                          </div>
+                          </motion.div>
                         );
                       })}
                     </div>
