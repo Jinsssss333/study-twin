@@ -54,13 +54,20 @@ export default function TeacherDashboard() {
     }
   }, [user, isLoading, navigate]);
 
-  if (isLoading || !user) {
+  // Redirect to setup only when the teacher profile is definitively missing (null), not while loading (undefined)
+  useEffect(() => {
+    if (!isLoading && user && user.role === "teacher" && teacher === null) {
+      navigate("/teacher/setup", { replace: true });
+    }
+  }, [teacher, isLoading, user, navigate]);
+
+  if (isLoading || !user || teacher === undefined) {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
   }
 
-  if (!teacher) {
-    navigate("/teacher/setup");
-    return null;
+  // Guard against null teacher while redirecting to setup in the useEffect above
+  if (teacher === null) {
+    return <div className="min-h-screen flex items-center justify-center">Redirecting...</div>;
   }
 
   const handleCreateClassroom = async (e: React.FormEvent) => {
