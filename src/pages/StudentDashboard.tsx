@@ -125,7 +125,7 @@ export default function StudentDashboard() {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-4">
               <img src="/logo.svg" alt="Study Twin" className="h-8 w-8" />
-              <h1 className="text-xl font-bold">Study Twin</h1>
+              <h1 className="text-xl font-bold dark:text-gray-100">Study Twin - Student</h1>
             </div>
             <div className="flex items-center space-x-4">
               <span className="text-sm text-gray-600 dark:text-gray-300">Welcome, {student.name}!</span>
