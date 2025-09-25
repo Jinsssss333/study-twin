@@ -50,19 +50,39 @@ export default function StudentDashboard() {
   // Export full progress report as PDF (captures the entire section)
   const handleExportPdf = async () => {
     try {
-      if (!reportRef.current) return;
+      if (!reportRef.current) {
+        toast.error("Report not ready. Please wait a moment and try again.");
+        return;
+      }
 
       const element = reportRef.current;
 
+      // Ensure layout is fully settled and images/fonts are ready
+      await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+
+      // Preload any images within the report area (best effort)
+      const imgs = Array.from(element.querySelectorAll("img"));
+      await Promise.all(
+        imgs.map(
+          (img) =>
+            new Promise<void>((resolve) => {
+              if (img.complete) return resolve();
+              img.onload = () => resolve();
+              img.onerror = () => resolve(); // ignore broken images to avoid blocking
+            })
+        )
+      );
+
       // Use device pixel ratio for crisp output and enable CORS to avoid tainted canvas
       const scale = Math.min(2, Math.max(1, window.devicePixelRatio || 1));
+
       const canvas = await html2canvas(element, {
         scale,
         useCORS: true,
         allowTaint: true,
         backgroundColor: "#ffffff",
         scrollX: 0,
-        scrollY: -window.scrollY,
+        scrollY: 0, // avoid negative offsets that can cause blank pages
         windowWidth: document.documentElement.clientWidth,
       });
 
@@ -79,7 +99,7 @@ export default function StudentDashboard() {
       let position = 0;
       pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
 
-      // Add additional pages if needed
+      // Add additional pages if needed by shifting the same tall image up
       let remainingHeight = imgHeight - pageHeight;
       while (remainingHeight > 0) {
         pdf.addPage();
@@ -90,8 +110,9 @@ export default function StudentDashboard() {
 
       pdf.save("study_twin_progress.pdf");
       toast.success("PDF downloaded");
-    } catch (e) {
-      toast.error("Failed to export PDF");
+    } catch (e: any) {
+      console.error(e);
+      toast.error(typeof e?.message === "string" ? e.message : "Failed to export PDF");
     }
   };
 
