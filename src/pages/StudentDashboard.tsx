@@ -101,13 +101,23 @@ export default function StudentDashboard() {
     }
   }, [user, isLoading, navigate]);
 
+  // Add: redirect to setup via effect instead of during render
+  useEffect(() => {
+    if (student === null) {
+      navigate("/student/setup", { replace: true });
+    }
+  }, [student, navigate]);
+
   if (isLoading || !user) {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
   }
 
-  if (!student) {
-    navigate("/student/setup");
-    return null;
+  // Replace direct navigate during render with safe loading/null handling
+  if (student === undefined) {
+    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  }
+  if (student === null) {
+    return null; // Redirect handled in useEffect above
   }
 
   const handleGenerateTwin = async () => {
