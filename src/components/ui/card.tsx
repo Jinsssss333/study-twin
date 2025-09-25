@@ -7,7 +7,9 @@ function Card({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="card"
       className={cn(
-        "bg-card text-card-foreground flex flex-col gap-6 rounded-xl border py-6 shadow-sm",
+        // Apply frosted glass effect globally
+        "text-card-foreground flex flex-col gap-6 rounded-xl border py-6 shadow-sm",
+        "bg-white/70 dark:bg-white/10 backdrop-blur-md supports-[backdrop-filter]:bg-white/60 border-white/60",
         className
       )}
       {...props}
