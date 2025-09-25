@@ -21,6 +21,7 @@ import {
 import { useNavigate } from "react-router";
 import { useEffect } from "react";
 import { toast } from "sonner";
+import SubjectMastery from "@/components/student/SubjectMastery";
 
 export default function StudentDashboard() {
   const { user, isLoading } = useAuth();
@@ -200,33 +201,7 @@ export default function StudentDashboard() {
             </div>
 
             {/* Subject Mastery */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <TrendingUp className="h-5 w-5" />
-                  <span>Subject Mastery</span>
-                </CardTitle>
-                <CardDescription>
-                  Your current progress across all subjects
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {subjects.map((subject) => (
-                  <div key={subject.key} className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium">{subject.name}</span>
-                      <span className="text-sm text-gray-500">
-                        {student.mastery[subject.key as keyof typeof student.mastery]}%
-                      </span>
-                    </div>
-                    <Progress 
-                      value={student.mastery[subject.key as keyof typeof student.mastery]} 
-                      className="h-2"
-                    />
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
+            <SubjectMastery mastery={student.mastery} subjects={subjects} />
 
             {/* Quick Actions */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
