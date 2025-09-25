@@ -63,13 +63,14 @@ export default function StudentSidebar({
               key={item.key}
               variant={isActive ? "default" : "ghost"}
               className={cn(
-                "w-full justify-start",
-                collapsed ? "px-0 mx-auto w-10 h-10" : "px-3"
+                "w-full",
+                collapsed ? "px-0 mx-auto w-10 h-10 justify-center" : "px-3 justify-start"
               )}
               onClick={() => onChange(item.key)}
               title={collapsed ? item.label : undefined}
+              aria-label={item.label}
             >
-              <span className="mr-2">{item.icon}</span>
+              <span className={cn(collapsed ? "" : "mr-2")}>{item.icon}</span>
               {!collapsed && <span className="truncate">{item.label}</span>}
             </Button>
           );

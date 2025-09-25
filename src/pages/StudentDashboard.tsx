@@ -128,7 +128,7 @@ export default function StudentDashboard() {
               <h1 className="text-xl font-bold">Study Twin</h1>
             </div>
             <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-600">Welcome, {student.name}!</span>
+              <span className="text-sm text-gray-600 dark:text-gray-300">Welcome, {student.name}!</span>
               <Button variant="outline" onClick={() => navigate("/")}>
                 Home
               </Button>
@@ -167,7 +167,7 @@ export default function StudentDashboard() {
               <h2 className="text-3xl font-bold text-gray-900 mb-2">
                 Welcome back, {student.name}! 👋
               </h2>
-              <p className="text-gray-600">
+              <p className="text-gray-600 dark:text-gray-300">
                 Ready to continue your learning journey? Let's see how you're progressing.
               </p>
             </motion.div>
