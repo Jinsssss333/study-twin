@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
+import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/hooks/use-auth";
 import { api } from "@/convex/_generated/api";
 import { useQuery, useMutation } from "convex/react";
@@ -29,6 +30,7 @@ export default function TeacherDashboard() {
   const teacher = useQuery(api.teachers.getCurrentProfile);
   const classrooms = useQuery(api.teachers.getMyClassrooms);
   const createClassroom = useMutation(api.teachers.createClassroom);
+  const updateTeacher = useMutation(api.teachers.updateProfile);
 
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [newClassroom, setNewClassroom] = useState({
@@ -51,6 +53,34 @@ export default function TeacherDashboard() {
 
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
+
+  // Add settings state for profile form
+  const [profileDraft, setProfileDraft] = useState({ name: "", school: "" });
+
+  // Theme state and persistence (light default)
+  const [theme, setTheme] = useState<string>(() => {
+    const stored = typeof window !== "undefined" ? localStorage.getItem("theme") : null;
+    return stored ?? "light";
+  });
+
+  useEffect(() => {
+    if (theme === "dark") {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+    localStorage.setItem("theme", theme);
+  }, [theme]);
+
+  // Initialize profile form when teacher loads or dialog opens
+  useEffect(() => {
+    if (teacher) {
+      setProfileDraft({
+        name: teacher.name ?? "",
+        school: teacher.school ?? "",
+      });
+    }
+  }, [teacher, showSettings]);
 
   useEffect(() => {
     if (!isLoading && (!user || user.role !== "teacher")) {
@@ -126,6 +156,24 @@ export default function TeacherDashboard() {
 
   const totalStudents =
     classrooms?.reduce((sum, classroom) => sum + classroom.studentCount, 0) || 0;
+
+  const handleSaveProfile = async () => {
+    const name = profileDraft.name.trim();
+    if (!name) {
+      toast.error("Name is required");
+      return;
+    }
+    try {
+      await updateTeacher({
+        name,
+        school: profileDraft.school?.trim() || undefined,
+      } as any);
+      toast.success("Profile updated");
+      setShowSettings(false);
+    } catch {
+      toast.error("Failed to update profile");
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-blue-50">
@@ -488,10 +536,50 @@ export default function TeacherDashboard() {
                 <DialogTitle>Settings</DialogTitle>
                 <DialogDescription>Manage account preferences.</DialogDescription>
               </DialogHeader>
-              <div className="space-y-4">
-                <div className="text-sm text-muted-foreground">
-                  Appearance and additional settings will be available here.
+              <div className="space-y-6">
+                {/* Profile Section */}
+                <div className="space-y-3">
+                  <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Profile</h4>
+                  <div className="space-y-2">
+                    <Label htmlFor="teacher-name">Name</Label>
+                    <Input
+                      id="teacher-name"
+                      value={profileDraft.name}
+                      onChange={(e) => setProfileDraft((p) => ({ ...p, name: e.target.value }))}
+                      placeholder="Your name"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="teacher-school">School</Label>
+                    <Input
+                      id="teacher-school"
+                      value={profileDraft.school}
+                      onChange={(e) => setProfileDraft((p) => ({ ...p, school: e.target.value }))}
+                      placeholder="Your school (optional)"
+                    />
+                  </div>
+                  <div className="flex justify-end">
+                    <Button onClick={handleSaveProfile}>Save changes</Button>
+                  </div>
                 </div>
+
+                {/* Appearance Section */}
+                <div className="space-y-3">
+                  <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100">Appearance</h4>
+                  <div className="flex items-center justify-between rounded-md border p-3 bg-card/60">
+                    <div>
+                      <div className="text-sm font-medium text-gray-900 dark:text-gray-100">Dark mode</div>
+                      <div className="text-xs text-gray-600 dark:text-gray-300">Toggle between light and dark themes</div>
+                    </div>
+                    <Switch
+                      checked={theme === "dark"}
+                      onCheckedChange={(checked) => setTheme(checked ? "dark" : "light")}
+                      aria-label="Toggle dark mode"
+                    />
+                  </div>
+                </div>
+
+                {/* Footer */}
                 <div className="flex justify-end gap-2">
                   <Button variant="outline" onClick={() => setShowSettings(false)}>Close</Button>
                   <Button variant="destructive" onClick={signOut}>Sign out</Button>

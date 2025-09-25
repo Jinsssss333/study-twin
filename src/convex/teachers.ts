@@ -290,3 +290,32 @@ export const addFeedback = mutation({
     });
   },
 });
+
+export const updateProfile = mutation({
+  args: {
+    name: v.string(),
+    school: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const user = await getCurrentUser(ctx);
+    if (!user || user.role !== "teacher") {
+      throw new Error("Unauthorized");
+    }
+
+    const teacher = await ctx.db
+      .query("teachers")
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .unique();
+
+    if (!teacher) {
+      throw new Error("Teacher profile not found");
+    }
+
+    await ctx.db.patch(teacher._id, {
+      name: args.name,
+      school: args.school,
+    });
+
+    return teacher._id;
+  },
+});
