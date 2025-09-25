@@ -63,6 +63,14 @@ export default function TeacherDashboard() {
     return stored ?? "light";
   });
 
+  // Add: Centralized sign out with confirmation
+  const handleSignOut = async () => {
+    const ok = window.confirm("Are you sure you want to sign out?");
+    if (!ok) return;
+    await signOut();
+    navigate("/auth", { replace: true });
+  };
+
   useEffect(() => {
     if (theme === "dark") {
       document.documentElement.classList.add("dark");
@@ -198,7 +206,7 @@ export default function TeacherDashboard() {
           collapsed={sidebarCollapsed}
           onToggle={() => setSidebarCollapsed((c) => !c)}
           onOpenSettings={() => setShowSettings(true)}
-          onSignOut={signOut}
+          onSignOut={handleSignOut}
         />
         <div className="flex-1">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -582,7 +590,7 @@ export default function TeacherDashboard() {
                 {/* Footer */}
                 <div className="flex justify-end gap-2">
                   <Button variant="outline" onClick={() => setShowSettings(false)}>Close</Button>
-                  <Button variant="destructive" onClick={signOut}>Sign out</Button>
+                  <Button variant="destructive" onClick={handleSignOut}>Sign out</Button>
                 </div>
               </div>
             </DialogContent>

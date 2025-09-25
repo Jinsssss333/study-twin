@@ -3,6 +3,7 @@ import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { Settings, LogOut, LayoutGrid, Brain, BookOpen, Users, BarChart3, MessageSquare, ChevronLeft, ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router";
 
 type SidebarProps = {
   collapsed: boolean;
@@ -32,6 +33,16 @@ export default function StudentSidebar({
   onOpenSettings,
   onSignOut,
 }: SidebarProps) {
+  const navigate = useNavigate();
+
+  // Add: Sign out handler with confirmation and redirect to /auth
+  const handleSignOut = async () => {
+    const ok = window.confirm("Are you sure you want to sign out?");
+    if (!ok) return;
+    await onSignOut();
+    navigate("/auth", { replace: true });
+  };
+
   return (
     <motion.aside
       initial={false}
@@ -91,7 +102,7 @@ export default function StudentSidebar({
         <Button
           variant="outline"
           className={cn("w-full justify-start mt-2", collapsed ? "px-0 mx-auto w-10 h-10" : "px-3")}
-          onClick={onSignOut}
+          onClick={handleSignOut}
           title={collapsed ? "Sign out" : undefined}
         >
           <LogOut className="h-4 w-4 mr-2" />

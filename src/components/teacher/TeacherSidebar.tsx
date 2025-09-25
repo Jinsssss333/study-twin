@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ChevronLeft, ChevronRight, Settings, LogOut } from "lucide-react";
+import { useNavigate } from "react-router";
 
 type Props = {
   collapsed: boolean;
@@ -15,6 +16,16 @@ export default function TeacherSidebar({
   onOpenSettings,
   onSignOut,
 }: Props) {
+  const navigate = useNavigate();
+
+  // Add: Sign out handler with confirmation and redirect to /auth
+  const handleSignOut = async () => {
+    const ok = window.confirm("Are you sure you want to sign out?");
+    if (!ok) return;
+    await onSignOut();
+    navigate("/auth", { replace: true });
+  };
+
   return (
     <aside
       className={cn(
@@ -63,7 +74,7 @@ export default function TeacherSidebar({
               "w-full justify-start text-red-600 hover:text-red-700",
               collapsed && "justify-center"
             )}
-            onClick={onSignOut}
+            onClick={handleSignOut}
           >
             <LogOut className={cn("h-5 w-5", !collapsed && "mr-2")} />
             {!collapsed && <span className="text-sm">Sign out</span>}
