@@ -37,7 +37,8 @@ export default function TeacherSetup() {
         school: formData.school || undefined,
       });
       toast.success("Profile created successfully!");
-      navigate("/teacher/dashboard");
+      // Ensure immediate redirect and prevent back navigation
+      navigate("/teacher/dashboard", { replace: true });
     } catch (error) {
       toast.error("Failed to create profile");
     } finally {
