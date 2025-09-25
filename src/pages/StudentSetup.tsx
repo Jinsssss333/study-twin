@@ -44,7 +44,7 @@ export default function StudentSetup() {
     try {
       await createProfile(formData);
       toast.success("Profile created successfully!");
-      navigate("/student/dashboard");
+      navigate("/student/dashboard", { replace: true });
     } catch (error) {
       toast.error("Failed to create profile");
     } finally {
