@@ -12,6 +12,8 @@ import { ArrowRight, User, Clock, BookOpen } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
+import { useEffect } from "react";
+import { useQuery } from "convex/react";
 
 export default function StudentSetup() {
   const { user } = useAuth();
@@ -32,6 +34,14 @@ export default function StudentSetup() {
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Add: watch for existing profile and redirect
+  const existingProfile = useQuery(api.students.getCurrentProfile, {});
+  useEffect(() => {
+    if (existingProfile) {
+      navigate("/student/dashboard", { replace: true });
+    }
+  }, [existingProfile, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
