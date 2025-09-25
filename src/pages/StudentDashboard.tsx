@@ -26,7 +26,7 @@ import { toast } from "sonner";
 import SubjectMastery from "@/components/student/SubjectMastery";
 import { FileDown } from "lucide-react";
 import html2canvas from "html2canvas";
-import jsPDF from "jspdf";
+import { jsPDF } from "jspdf";
 
 export default function StudentDashboard() {
   const { user, isLoading } = useAuth();
@@ -51,22 +51,43 @@ export default function StudentDashboard() {
   const handleExportPdf = async () => {
     try {
       if (!reportRef.current) return;
-      const canvas = await html2canvas(reportRef.current, { scale: 2, backgroundColor: null });
+
+      const element = reportRef.current;
+
+      // Use device pixel ratio for crisp output and enable CORS to avoid tainted canvas
+      const scale = Math.min(2, Math.max(1, window.devicePixelRatio || 1));
+      const canvas = await html2canvas(element, {
+        scale,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: "#ffffff",
+        scrollX: 0,
+        scrollY: -window.scrollY,
+        windowWidth: document.documentElement.clientWidth,
+      });
+
       const imgData = canvas.toDataURL("image/png");
       const pdf = new jsPDF("p", "pt", "a4");
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
+
+      // Fit image width to page width and compute height preserving aspect ratio
       const imgWidth = pageWidth;
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
+      // Add first page
       let position = 0;
       pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
-      // add pages if content is taller than one page
-      while (imgHeight - position > pageHeight) {
-        position -= pageHeight;
+
+      // Add additional pages if needed
+      let remainingHeight = imgHeight - pageHeight;
+      while (remainingHeight > 0) {
         pdf.addPage();
+        position -= pageHeight;
         pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+        remainingHeight -= pageHeight;
       }
+
       pdf.save("study_twin_progress.pdf");
       toast.success("PDF downloaded");
     } catch (e) {
