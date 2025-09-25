@@ -1,0 +1,293 @@
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { useAuth } from "@/hooks/use-auth";
+import { api } from "@/convex/_generated/api";
+import { useQuery, useMutation } from "convex/react";
+import { motion } from "framer-motion";
+import { 
+  Plus, 
+  Users, 
+  BookOpen, 
+  BarChart3,
+  Copy,
+  Settings,
+  GraduationCap
+} from "lucide-react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router";
+import { toast } from "sonner";
+
+export default function TeacherDashboard() {
+  const { user, isLoading } = useAuth();
+  const navigate = useNavigate();
+  
+  const teacher = useQuery(api.teachers.getCurrentProfile);
+  const classrooms = useQuery(api.teachers.getMyClassrooms);
+  const createClassroom = useMutation(api.teachers.createClassroom);
+
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [newClassroom, setNewClassroom] = useState({
+    name: "",
+    description: "",
+  });
+
+  useEffect(() => {
+    if (!isLoading && (!user || user.role !== "teacher")) {
+      navigate("/auth");
+    }
+  }, [user, isLoading, navigate]);
+
+  if (isLoading || !user) {
+    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  }
+
+  if (!teacher) {
+    navigate("/teacher/setup");
+    return null;
+  }
+
+  const handleCreateClassroom = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newClassroom.name.trim()) {
+      toast.error("Please enter a classroom name");
+      return;
+    }
+
+    try {
+      await createClassroom({
+        name: newClassroom.name,
+        description: newClassroom.description || undefined,
+      });
+      toast.success("Classroom created successfully!");
+      setShowCreateDialog(false);
+      setNewClassroom({ name: "", description: "" });
+    } catch (error) {
+      toast.error("Failed to create classroom");
+    }
+  };
+
+  const copyClassroomCode = (code: string) => {
+    navigator.clipboard.writeText(code);
+    toast.success("Classroom code copied to clipboard!");
+  };
+
+  const totalStudents = classrooms?.reduce((sum, classroom) => sum + classroom.studentCount, 0) || 0;
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-blue-50">
+      {/* Header */}
+      <header className="bg-white border-b sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center space-x-4">
+              <img src="/logo.svg" alt="Study Twin" className="h-8 w-8" />
+              <h1 className="text-xl font-bold">Study Twin - Teacher</h1>
+            </div>
+            <div className="flex items-center space-x-4">
+              <span className="text-sm text-gray-600">Welcome, {teacher.name}!</span>
+              <Button variant="outline" onClick={() => navigate("/")}>
+                Home
+              </Button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Welcome Section */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-8"
+        >
+          <h2 className="text-3xl font-bold text-gray-900 mb-2">
+            Welcome back, {teacher.name}! 👨‍🏫
+          </h2>
+          <p className="text-gray-600">
+            Manage your classrooms and track your students' progress.
+          </p>
+        </motion.div>
+
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+          >
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total Classrooms</CardTitle>
+                <BookOpen className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{classrooms?.length || 0}</div>
+                <p className="text-xs text-muted-foreground">
+                  Active classrooms
+                </p>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total Students</CardTitle>
+                <GraduationCap className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{totalStudents}</div>
+                <p className="text-xs text-muted-foreground">
+                  Across all classrooms
+                </p>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+          >
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">School</CardTitle>
+                <Settings className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {teacher.school ? teacher.school.substring(0, 10) + (teacher.school.length > 10 ? "..." : "") : "N/A"}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Institution
+                </p>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </div>
+
+        {/* Classrooms Section */}
+        <div className="space-y-6">
+          <div className="flex justify-between items-center">
+            <h3 className="text-2xl font-bold">My Classrooms</h3>
+            <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+              <DialogTrigger asChild>
+                <Button className="bg-gradient-to-r from-green-600 to-green-700">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create Classroom
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Create New Classroom</DialogTitle>
+                  <DialogDescription>
+                    Set up a new classroom for your students to join
+                  </DialogDescription>
+                </DialogHeader>
+                <form onSubmit={handleCreateClassroom} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="classroom-name">Classroom Name *</Label>
+                    <Input
+                      id="classroom-name"
+                      value={newClassroom.name}
+                      onChange={(e) => setNewClassroom({ ...newClassroom, name: e.target.value })}
+                      placeholder="e.g., Math 101, Biology A, etc."
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="classroom-description">Description (Optional)</Label>
+                    <Input
+                      id="classroom-description"
+                      value={newClassroom.description}
+                      onChange={(e) => setNewClassroom({ ...newClassroom, description: e.target.value })}
+                      placeholder="Brief description of the classroom"
+                    />
+                  </div>
+                  <Button type="submit" className="w-full">
+                    Create Classroom
+                  </Button>
+                </form>
+              </DialogContent>
+            </Dialog>
+          </div>
+
+          {classrooms && classrooms.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {classrooms.map((classroom, index) => (
+                <motion.div
+                  key={classroom._id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                >
+                  <Card className="hover:shadow-lg transition-shadow">
+                    <CardHeader>
+                      <CardTitle className="flex items-center justify-between">
+                        <span>{classroom.name}</span>
+                        <div className="flex items-center space-x-1 text-sm text-gray-500">
+                          <Users className="h-4 w-4" />
+                          <span>{classroom.studentCount}</span>
+                        </div>
+                      </CardTitle>
+                      {classroom.description && (
+                        <CardDescription>{classroom.description}</CardDescription>
+                      )}
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div>
+                          <p className="text-sm font-medium">Classroom Code</p>
+                          <p className="text-lg font-mono font-bold text-green-600">{classroom.code}</p>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => copyClassroomCode(classroom.code)}
+                        >
+                          <Copy className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      
+                      <div className="flex space-x-2">
+                        <Button variant="outline" className="flex-1" size="sm">
+                          <BarChart3 className="h-4 w-4 mr-2" />
+                          View Reports
+                        </Button>
+                        <Button variant="outline" className="flex-1" size="sm">
+                          <Users className="h-4 w-4 mr-2" />
+                          Students
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))}
+            </div>
+          ) : (
+            <Card>
+              <CardContent className="text-center py-12">
+                <BookOpen className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No classrooms yet</h3>
+                <p className="text-gray-600 mb-4">
+                  Create your first classroom to start managing students
+                </p>
+                <Button onClick={() => setShowCreateDialog(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create Your First Classroom
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

@@ -16,6 +16,10 @@ import type {
 import type * as auth_emailOtp from "../auth/emailOtp.js";
 import type * as auth from "../auth.js";
 import type * as http from "../http.js";
+import type * as quizzes from "../quizzes.js";
+import type * as students from "../students.js";
+import type * as teachers from "../teachers.js";
+import type * as testData from "../testData.js";
 import type * as users from "../users.js";
 
 /**
@@ -30,6 +34,10 @@ declare const fullApi: ApiFromModules<{
   "auth/emailOtp": typeof auth_emailOtp;
   auth: typeof auth;
   http: typeof http;
+  quizzes: typeof quizzes;
+  students: typeof students;
+  teachers: typeof teachers;
+  testData: typeof testData;
   users: typeof users;
 }>;
 export declare const api: FilterApi<

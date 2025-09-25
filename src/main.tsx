@@ -2,6 +2,13 @@ import { Toaster } from "@/components/ui/sonner";
 import { VlyToolbar } from "../vly-toolbar-readonly.tsx";
 import { InstrumentationProvider } from "@/instrumentation.tsx";
 import AuthPage from "@/pages/Auth.tsx";
+import StudentDashboard from "@/pages/StudentDashboard.tsx";
+import StudentSetup from "@/pages/StudentSetup.tsx";
+import QuizPage from "@/pages/QuizPage.tsx";
+import JoinClassroom from "@/pages/JoinClassroom.tsx";
+import TeacherSetup from "@/pages/TeacherSetup.tsx";
+import TeacherDashboard from "@/pages/TeacherDashboard.tsx";
+import DashboardRedirect from "@/components/DashboardRedirect.tsx";
 import { ConvexAuthProvider } from "@convex-dev/auth/react";
 import { ConvexReactClient } from "convex/react";
 import { StrictMode, useEffect } from "react";
@@ -49,7 +56,19 @@ createRoot(document.getElementById("root")!).render(
           <RouteSyncer />
           <Routes>
             <Route path="/" element={<Landing />} />
-            <Route path="/auth" element={<AuthPage redirectAfterAuth="/" />} /> {/* TODO: change redirect after auth to correct page */}
+            <Route path="/auth" element={<AuthPage redirectAfterAuth="/dashboard" />} />
+            <Route path="/dashboard" element={<DashboardRedirect />} />
+
+            {/* Student */}
+            <Route path="/student/setup" element={<StudentSetup />} />
+            <Route path="/student/dashboard" element={<StudentDashboard />} />
+            <Route path="/student/join-classroom" element={<JoinClassroom />} />
+            <Route path="/student/quiz/:subject?" element={<QuizPage />} />
+
+            {/* Teacher */}
+            <Route path="/teacher/setup" element={<TeacherSetup />} />
+            <Route path="/teacher/dashboard" element={<TeacherDashboard />} />
+
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
