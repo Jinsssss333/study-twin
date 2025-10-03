@@ -22,6 +22,15 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 import TeacherSidebar from "@/components/teacher/TeacherSidebar";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem
+} from "@/components/ui/select";
 
 export default function TeacherDashboard() {
   const { user, isLoading, signOut } = useAuth();
@@ -31,6 +40,10 @@ export default function TeacherDashboard() {
   const classrooms = useQuery(api.teachers.getMyClassrooms);
   const createClassroom = useMutation(api.teachers.createClassroom);
   const updateTeacher = useMutation(api.teachers.updateProfile);
+  const generateAlerts = useMutation(api.teachers.generateAtRiskAlerts);
+  const bulkAddFeedback = useMutation(api.teachers.bulkAddFeedback);
+  const createCustomQuiz = useMutation(api.teachers.createCustomQuiz);
+  const assignChallenge = useMutation(api.teachers.assignChallenge);
 
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [newClassroom, setNewClassroom] = useState({
@@ -45,6 +58,35 @@ export default function TeacherDashboard() {
     selectedClassroomId ? { classroomId: selectedClassroomId as any } : "skip"
   );
   const addFeedback = useMutation(api.teachers.addFeedback);
+
+  // Challenges listing for selected classroom
+  const challenges = useQuery(
+    api.teachers.getChallenges,
+    selectedClassroomId ? { classroomId: selectedClassroomId as any } : "skip"
+  );
+
+  // UI state for new features
+  const SUBJECT_OPTIONS = [
+    { value: "math", label: "Math" },
+    { value: "science", label: "Science" },
+    { value: "english", label: "English" },
+    { value: "history", label: "History" },
+    { value: "foreign_language", label: "Foreign Language" },
+  ] as const;
+
+  const [bulkSelected, setBulkSelected] = useState<Record<string, boolean>>({});
+  const [bulkMessage, setBulkMessage] = useState("");
+  const [quizSubject, setQuizSubject] = useState<string>("math");
+  const [quizQuestions, setQuizQuestions] = useState<Array<{
+    prompt: string;
+    options: string[];
+    correctIndex: number;
+  }>>([
+    { prompt: "", options: ["", "", "", ""], correctIndex: 0 },
+  ]);
+
+  const [challengeDesc, setChallengeDesc] = useState("");
+  const [challengeDueDate, setChallengeDueDate] = useState<string>(""); // yyyy-mm-dd
 
   // Ensure a non-null list before mapping to avoid TS 'possibly null' errors
   const studentsSafe = (studentsInSelected ?? []).filter(
@@ -180,6 +222,117 @@ export default function TeacherDashboard() {
       setShowSettings(false);
     } catch {
       toast.error("Failed to update profile");
+    }
+  };
+
+  const handleGenerateAlerts = async () => {
+    if (!selectedClassroomId) return;
+    try {
+      const count = await generateAlerts({ classroomId: selectedClassroomId as any });
+      toast.success(`Generated ${count} at-risk alert(s).`);
+    } catch (e) {
+      toast.error("Failed to generate alerts");
+    }
+  };
+
+  const handleBulkSend = async () => {
+    if (!selectedClassroomId) return;
+    const ids = Object.entries(bulkSelected)
+      .filter(([, v]) => v)
+      .map(([id]) => id);
+    if (ids.length === 0) {
+      toast.error("Select at least one student");
+      return;
+    }
+    const message = bulkMessage.trim();
+    if (!message) {
+      toast.error("Enter a message");
+      return;
+    }
+    try {
+      await bulkAddFeedback({
+        classroomId: selectedClassroomId as any,
+        studentIds: ids as any,
+        message,
+      });
+      toast.success(`Sent feedback to ${ids.length} student(s)`);
+      setBulkMessage("");
+      setBulkSelected({});
+    } catch {
+      toast.error("Failed to send bulk feedback");
+    }
+  };
+
+  const handleAddQuizQuestion = () => {
+    setQuizQuestions((prev) => [
+      ...prev,
+      { prompt: "", options: ["", "", "", ""], correctIndex: 0 },
+    ]);
+  };
+  const handleRemoveQuizQuestion = (index: number) => {
+    setQuizQuestions((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleCreateCustomQuiz = async () => {
+    if (!selectedClassroomId) return;
+    // basic validation
+    if (!quizSubject) {
+      toast.error("Select a subject");
+      return;
+    }
+    if (quizQuestions.length === 0) {
+      toast.error("Add at least one question");
+      return;
+    }
+    for (const q of quizQuestions) {
+      if (!q.prompt.trim() || q.options.some((o) => !o.trim())) {
+        toast.error("Fill all question fields");
+        return;
+      }
+      if (q.correctIndex < 0 || q.correctIndex > 3) {
+        toast.error("Set correct answer for each question");
+        return;
+      }
+    }
+    try {
+      await createCustomQuiz({
+        classroomId: selectedClassroomId as any,
+        subject: quizSubject as any,
+        questions: quizQuestions,
+        assignedToAll: true,
+      });
+      toast.success("Custom quiz created and assigned to all students");
+      // reset form
+      setQuizSubject("math");
+      setQuizQuestions([{ prompt: "", options: ["", "", "", ""], correctIndex: 0 }]);
+    } catch {
+      toast.error("Failed to create custom quiz");
+    }
+  };
+
+  const handleAssignChallenge = async () => {
+    if (!selectedClassroomId) return;
+    const d = challengeDesc.trim();
+    if (!d) {
+      toast.error("Enter a challenge description");
+      return;
+    }
+    if (!challengeDueDate) {
+      toast.error("Set a due date");
+      return;
+    }
+    const dueTs = new Date(challengeDueDate + "T23:59:59").getTime();
+    try {
+      await assignChallenge({
+        classroomId: selectedClassroomId as any,
+        description: d,
+        dueDate: dueTs,
+      });
+      toast.success("Challenge assigned");
+      setChallengeDesc("");
+      setChallengeDueDate("");
+    } catch {
+      toast.error("Failed to assign challenge");
     }
   };
 
@@ -420,6 +573,181 @@ export default function TeacherDashboard() {
 
               {selectedClassroomId ? (
                 <div className="space-y-4">
+                  {/* New: Classroom management controls */}
+                  <div className="space-y-4 rounded-md border dark:border-gray-700 p-3 bg-gray-50 dark:bg-card/60">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="text-sm font-semibold dark:text-gray-100">
+                        Classroom Tools
+                      </div>
+                      <div className="flex gap-2">
+                        <Button variant="outline" size="sm" onClick={handleGenerateAlerts}>
+                          Generate At-Risk Alerts
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Bulk Feedback */}
+                    <div className="space-y-2">
+                      <div className="text-xs font-medium dark:text-gray-100">Bulk Feedback</div>
+                      <Textarea
+                        value={bulkMessage}
+                        onChange={(e) => setBulkMessage(e.target.value)}
+                        placeholder="Write a message to send to selected students..."
+                        className="min-h-[80px] dark:bg-card/60 dark:text-gray-100"
+                      />
+                      <div className="flex justify-end">
+                        <Button size="sm" onClick={handleBulkSend}>
+                          Send to Selected
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Custom Quiz */}
+                    <div className="space-y-3">
+                      <div className="text-xs font-medium dark:text-gray-100">Create Custom Quiz</div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div>
+                          <div className="text-xs mb-1">Subject</div>
+                          <Select value={quizSubject} onValueChange={(v) => setQuizSubject(v)}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select subject" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {SUBJECT_OPTIONS.map((s) => (
+                                <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="flex items-end">
+                          <Button variant="outline" size="sm" onClick={handleAddQuizQuestion}>
+                            Add Question
+                          </Button>
+                        </div>
+                      </div>
+
+                      <div className="space-y-3 max-h-[28vh] overflow-y-auto pr-1">
+                        {quizQuestions.map((q, idx) => (
+                          <div key={idx} className="rounded-md border dark:border-gray-700 p-3">
+                            <div className="flex justify-between items-center mb-2">
+                              <div className="text-xs font-medium">Question {idx + 1}</div>
+                              {quizQuestions.length > 1 && (
+                                <Button
+                                  variant="destructive"
+                                  size="sm"
+                                  onClick={() => handleRemoveQuizQuestion(idx)}
+                                >
+                                  Remove
+                                </Button>
+                              )}
+                            </div>
+                            <Input
+                              value={q.prompt}
+                              onChange={(e) => {
+                                const v = e.target.value;
+                                setQuizQuestions((prev) => {
+                                  const copy = [...prev];
+                                  copy[idx] = { ...copy[idx], prompt: v };
+                                  return copy;
+                                });
+                              }}
+                              placeholder="Enter the question prompt"
+                              className="mb-2"
+                            />
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                              {q.options.map((opt, i) => (
+                                <div key={i} className="flex items-center gap-2">
+                                  <input
+                                    type="radio"
+                                    name={`correct-${idx}`}
+                                    className="accent-green-600"
+                                    checked={q.correctIndex === i}
+                                    onChange={() => {
+                                      setQuizQuestions((prev) => {
+                                        const copy = [...prev];
+                                        copy[idx] = { ...copy[idx], correctIndex: i };
+                                        return copy;
+                                      });
+                                    }}
+                                  />
+                                  <Input
+                                    value={opt}
+                                    onChange={(e) => {
+                                      const v = e.target.value;
+                                      setQuizQuestions((prev) => {
+                                        const copy = [...prev];
+                                        const opts = [...copy[idx].options];
+                                        opts[i] = v;
+                                        copy[idx] = { ...copy[idx], options: opts };
+                                        return copy;
+                                      });
+                                    }}
+                                    placeholder={`Option ${i + 1}`}
+                                  />
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="flex justify-end">
+                        <Button size="sm" onClick={handleCreateCustomQuiz}>
+                          Create & Assign to All
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Challenges */}
+                    <div className="space-y-3">
+                      <div className="text-xs font-medium dark:text-gray-100">Challenges</div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <Input
+                          value={challengeDesc}
+                          onChange={(e) => setChallengeDesc(e.target.value)}
+                          placeholder="Challenge description"
+                        />
+                        <Input
+                          type="date"
+                          value={challengeDueDate}
+                          onChange={(e) => setChallengeDueDate(e.target.value)}
+                        />
+                      </div>
+                      <div className="flex justify-end">
+                        <Button size="sm" onClick={handleAssignChallenge}>
+                          Assign Challenge
+                        </Button>
+                      </div>
+
+                      <div className="space-y-2 max-h-[24vh] overflow-y-auto pr-1">
+                        {!challenges ? (
+                          <div className="text-sm text-gray-500 dark:text-gray-400">Loading challenges...</div>
+                        ) : challenges.length === 0 ? (
+                          <div className="text-sm text-gray-500 dark:text-gray-400">No challenges yet.</div>
+                        ) : (
+                          challenges.map((c) => (
+                            <div key={c._id} className="rounded-md border dark:border-gray-700 p-3">
+                              <div className="flex justify-between items-center">
+                                <div>
+                                  <div className="text-sm font-medium">{c.description}</div>
+                                  <div className="text-xs text-gray-500 dark:text-gray-400">
+                                    Due: {new Date(c.dueDate).toLocaleDateString()}
+                                  </div>
+                                </div>
+                                <div className="text-xs">
+                                  {Math.round(c.completionPercent)}% complete
+                                </div>
+                              </div>
+                              <div className="mt-2">
+                                <Progress value={c.completionPercent} />
+                              </div>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
                   {!studentsInSelected ? (
                     <div className="text-sm text-gray-500 dark:text-gray-400">Loading...</div>
                   ) : studentsSafe.length === 0 ? (
@@ -429,7 +757,18 @@ export default function TeacherDashboard() {
                       {studentsSafe.map((s) => (
                         <Card key={s._id}>
                           <CardHeader className="pb-2">
-                            <CardTitle className="text-base">{s.name}</CardTitle>
+                            <CardTitle className="text-base flex items-center justify-between">
+                              <span>{s.name}</span>
+                              <div className="flex items-center gap-2 text-xs">
+                                <Checkbox
+                                  checked={!!bulkSelected[s._id]}
+                                  onCheckedChange={(checked) =>
+                                    setBulkSelected((prev) => ({ ...prev, [s._id]: !!checked }))
+                                  }
+                                />
+                                <span className="text-gray-500 dark:text-gray-400">Select</span>
+                              </div>
+                            </CardTitle>
                             <CardDescription>
                               Joined: {new Date(s.joinedAt).toLocaleDateString()} • Recent Avg: {s.recentAvgScore}% • Quizzes: {s.quizCount}
                             </CardDescription>
