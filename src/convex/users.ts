@@ -1,7 +1,7 @@
 import { getAuthUserId } from "@convex-dev/auth/server";
 import { query, QueryCtx, mutation } from "./_generated/server";
 import { v } from "convex/values";
-import { roleValidator } from "./schema";
+import { ROLES } from "./schema";
 
 /**
  * Get the current signed in user. Returns null if the user is not signed in.
@@ -37,7 +37,7 @@ export const getCurrentUser = async (ctx: QueryCtx) => {
 // Set user role
 export const setRole = mutation({
   args: {
-    role: roleValidator,
+    role: ROLES,
   },
   handler: async (ctx, args) => {
     const userId = await getAuthUserId(ctx);

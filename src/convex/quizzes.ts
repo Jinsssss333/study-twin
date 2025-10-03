@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { getCurrentUser } from "./users";
-import { subjectValidator } from "./schema";
+import { SUBJECTS } from "./schema";
 
 // Sample quiz questions by subject
 const QUIZ_QUESTIONS = {
@@ -145,7 +145,7 @@ const QUIZ_QUESTIONS = {
 // Generate quiz for subject
 export const generateQuiz = mutation({
   args: {
-    subject: subjectValidator,
+    subject: SUBJECTS,
   },
   handler: async (ctx, args) => {
     const user = await getCurrentUser(ctx);
@@ -155,7 +155,7 @@ export const generateQuiz = mutation({
 
     const student = await ctx.db
       .query("students")
-      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .withIndex("by_userId", (q) => q.eq("userId", user._id))
       .unique();
 
     if (!student) {
@@ -163,15 +163,21 @@ export const generateQuiz = mutation({
     }
 
     // Get random 5 questions from the subject
-    const allQuestions = QUIZ_QUESTIONS[args.subject] || [];
+    const allQuestions = QUIZ_QUESTIONS[args.subject as keyof typeof QUIZ_QUESTIONS] || [];
     const shuffled = [...allQuestions].sort(() => Math.random() - 0.5);
-    const selectedQuestions = shuffled.slice(0, 5);
+    const selectedQuestions = shuffled.slice(0, 5).map(q => ({
+      prompt: q.question,
+      options: q.options,
+      correctIndex: q.correctAnswer,
+    }));
 
     return await ctx.db.insert("quizzes", {
       studentId: student._id,
       subject: args.subject,
       questions: selectedQuestions,
+      answers: [],
       score: 0,
+      completedAt: Date.now(),
     });
   },
 });
@@ -181,7 +187,7 @@ export const submitQuiz = mutation({
   args: {
     quizId: v.id("quizzes"),
     answers: v.array(v.number()),
-    timeSpent: v.number(),
+    timeSpent: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const user = await getCurrentUser(ctx);
@@ -194,26 +200,23 @@ export const submitQuiz = mutation({
       throw new Error("Quiz not found");
     }
 
-    // Calculate score
+    // Calculate score - handle both old and new question formats
     let correct = 0;
-    const updatedQuestions = quiz.questions.map((question, index) => {
+    quiz.questions.forEach((question, index) => {
       const studentAnswer = args.answers[index];
-      if (studentAnswer === question.correctAnswer) {
+      // Handle both formats: new (correctIndex) and old (correctAnswer)
+      const correctAnswer = 'correctIndex' in question ? question.correctIndex : (question as any).correctAnswer;
+      if (studentAnswer === correctAnswer) {
         correct++;
       }
-      return {
-        ...question,
-        studentAnswer,
-      };
     });
 
     const score = Math.round((correct / quiz.questions.length) * 100);
 
     await ctx.db.patch(args.quizId, {
-      questions: updatedQuestions,
+      answers: args.answers,
       score,
       completedAt: Date.now(),
-      timeSpent: args.timeSpent,
     });
 
     // Update mastery inline to avoid deep type instantiation issues
@@ -247,7 +250,7 @@ export const submitQuiz = mutation({
 // Get student's quiz history
 export const getMyQuizzes = query({
   args: {
-    subject: v.optional(subjectValidator),
+    subject: v.optional(SUBJECTS),
   },
   handler: async (ctx, args) => {
     const user = await getCurrentUser(ctx);
@@ -257,7 +260,7 @@ export const getMyQuizzes = query({
 
     const student = await ctx.db
       .query("students")
-      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .withIndex("by_userId", (q) => q.eq("userId", user._id))
       .unique();
 
     if (!student) {
@@ -277,7 +280,7 @@ export const getMyQuizzes = query({
 
     const allQuery = ctx.db
       .query("quizzes")
-      .withIndex("by_student", (q) => q.eq("studentId", student._id));
+      .withIndex("by_studentId", (q) => q.eq("studentId", student._id));
     
     return await allQuery.order("desc").collect();
   },
@@ -303,7 +306,7 @@ export const getQuiz = query({
     if (user.role === "student") {
       const student = await ctx.db
         .query("students")
-        .withIndex("by_user", (q) => q.eq("userId", user._id))
+        .withIndex("by_userId", (q) => q.eq("userId", user._id))
         .unique();
 
       if (!student || quiz.studentId !== student._id) {

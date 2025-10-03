@@ -1,7 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { getCurrentUser } from "./users";
-import { SUBJECTS, subjectValidator } from "./schema";
+import { SUBJECTS } from "./schema";
 
 // Create student profile
 export const createProfile = mutation({
@@ -26,7 +26,7 @@ export const createProfile = mutation({
     // Check if profile already exists
     const existing = await ctx.db
       .query("students")
-      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .withIndex("by_userId", (q) => q.eq("userId", user._id))
       .unique();
 
     if (existing) {
@@ -54,7 +54,7 @@ export const getCurrentProfile = query({
 
     return await ctx.db
       .query("students")
-      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .withIndex("by_userId", (q) => q.eq("userId", user._id))
       .unique();
   },
 });
@@ -81,7 +81,7 @@ export const updateProfile = mutation({
 
     const student = await ctx.db
       .query("students")
-      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .withIndex("by_userId", (q) => q.eq("userId", user._id))
       .unique();
 
     if (!student) {
@@ -110,7 +110,7 @@ export const generateTwin = mutation({
 
     const student = await ctx.db
       .query("students")
-      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .withIndex("by_userId", (q) => q.eq("userId", user._id))
       .unique();
 
     if (!student) {
@@ -167,7 +167,7 @@ export const joinClassroom = mutation({
 
     const student = await ctx.db
       .query("students")
-      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .withIndex("by_userId", (q) => q.eq("userId", user._id))
       .unique();
 
     if (!student) {
@@ -214,7 +214,7 @@ export const getMyClassrooms = query({
 
     const student = await ctx.db
       .query("students")
-      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .withIndex("by_userId", (q) => q.eq("userId", user._id))
       .unique();
 
     if (!student) {
@@ -223,7 +223,7 @@ export const getMyClassrooms = query({
 
     const memberships = await ctx.db
       .query("classroomStudents")
-      .withIndex("by_student", (q) => q.eq("studentId", student._id))
+      .withIndex("by_studentId", (q) => q.eq("studentId", student._id))
       .collect();
 
     const classrooms = await Promise.all(
@@ -247,7 +247,7 @@ export const getMyClassrooms = query({
 // Update mastery after quiz
 export const updateMasteryFromQuiz = mutation({
   args: {
-    subject: subjectValidator,
+    subject: SUBJECTS,
     score: v.number(),
   },
   handler: async (ctx, args) => {
@@ -258,7 +258,7 @@ export const updateMasteryFromQuiz = mutation({
 
     const student = await ctx.db
       .query("students")
-      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .withIndex("by_userId", (q) => q.eq("userId", user._id))
       .unique();
 
     if (!student) {
@@ -266,7 +266,7 @@ export const updateMasteryFromQuiz = mutation({
     }
 
     // Update mastery based on quiz performance
-    const currentMastery = student.mastery[args.subject];
+    const currentMastery = student.mastery[args.subject as keyof typeof student.mastery];
     let masteryChange = 0;
 
     if (args.score >= 90) masteryChange = 8;
@@ -299,7 +299,7 @@ export const getMyFeedback = query({
 
     const student = await ctx.db
       .query("students")
-      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .withIndex("by_userId", (q) => q.eq("userId", user._id))
       .unique();
 
     if (!student) {
@@ -308,7 +308,7 @@ export const getMyFeedback = query({
 
     const feedback = await ctx.db
       .query("feedback")
-      .withIndex("by_student", (q) => q.eq("studentId", student._id))
+      .withIndex("by_studentId", (q) => q.eq("studentId", student._id))
       .order("desc")
       .collect();
 
@@ -333,7 +333,7 @@ export const markFeedbackRead = mutation({
 
     const student = await ctx.db
       .query("students")
-      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .withIndex("by_userId", (q) => q.eq("userId", user._id))
       .unique();
 
     if (!student || fb.studentId !== student._id) {

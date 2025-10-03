@@ -141,7 +141,8 @@ export default function QuizPage() {
                 <div className="space-y-4">
                   <h3 className="font-semibold">Question Review:</h3>
                   {quiz.questions.map((question, index) => {
-                    const isCorrect = question.studentAnswer === question.correctAnswer;
+                    const correctAnswer = 'correctIndex' in question ? question.correctIndex : question.correctAnswer;
+                    const isCorrect = question.studentAnswer === correctAnswer;
                     return (
                       <div key={index} className={`p-4 rounded-lg border ${isCorrect ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
                         <div className="flex items-start space-x-3">
@@ -151,13 +152,13 @@ export default function QuizPage() {
                             <XCircle className="w-5 h-5 text-red-600 mt-0.5" />
                           )}
                           <div className="flex-1">
-                            <p className="font-medium mb-2">{question.question}</p>
+                            <p className="font-medium mb-2">{'question' in question ? question.question : question.prompt}</p>
                             <p className="text-sm text-gray-600">
                               Your answer: {question.options[question.studentAnswer || 0]}
                             </p>
                             {!isCorrect && (
                               <p className="text-sm text-green-600">
-                                Correct answer: {question.options[question.correctAnswer]}
+                                Correct answer: {question.options['correctIndex' in question ? question.correctIndex : question.correctAnswer]}
                               </p>
                             )}
                           </div>
@@ -233,7 +234,7 @@ export default function QuizPage() {
                 Question {currentQuestion + 1}
               </CardTitle>
               <CardDescription className="text-base">
-                {question.question}
+                {'question' in question ? question.question : question.prompt}
               </CardDescription>
             </CardHeader>
             <CardContent>
