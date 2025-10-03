@@ -1,5 +1,6 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
+import { authTables } from "@convex-dev/auth/server";
 
 // Enums
 export const ROLES = v.union(v.literal("student"), v.literal("teacher"));
@@ -13,6 +14,8 @@ export const SUBJECTS = v.union(
 );
 
 export default defineSchema({
+  // Add Convex Auth tables to ensure required indexes exist
+  ...authTables,
   users: defineTable({
     email: v.optional(v.string()),
     emailVerificationTime: v.optional(v.number()),
