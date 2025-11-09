@@ -147,13 +147,7 @@ export default function StudentDashboard() {
             onChange={setActiveTab}
             studentName={student.name}
             onOpenSettings={() => setSettingsOpen(true)}
-            onSignOut={async () => {
-              try {
-                await signOut();
-              } catch {
-                // ignore
-              }
-            }}
+            onSignOut={signOut}
           />
 
           {/* Main content */}
