@@ -39,8 +39,12 @@ export default function StudentSidebar({
   const handleSignOut = async () => {
     const ok = window.confirm("Are you sure you want to sign out?");
     if (!ok) return;
-    await onSignOut();
-    navigate("/auth", { replace: true });
+    try {
+      await onSignOut();
+      navigate("/auth", { replace: true });
+    } catch (error) {
+      console.error("Sign out error:", error);
+    }
   };
 
   return (
